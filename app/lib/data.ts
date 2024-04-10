@@ -9,21 +9,26 @@ import {
   Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function fetchRevenue() {
   // Add noStore() here to prevent the response from being cached.
   // This is equivalent to in fetch(..., {cache: 'no-store'}).
+  noStore();
 
   try {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Fetching revenue data...');
+    /* The line `await new Promise((resolve) => setTimeout(resolve, 3000));` is creating a promise that
+   resolves after a delay of 3000 milliseconds (3 seconds). This construct is often used to
+   introduce an artificial delay in asynchronous code for demonstration or testing purposes. */
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await sql<Revenue>`SELECT * FROM revenue`;
 
-    // console.log('Data fetch completed after 3 seconds.');
+    console.log('Data fetch completed after 3 seconds.');
 
     return data.rows;
   } catch (error) {
@@ -33,26 +38,47 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  noStore();
   try {
-    const data = await sql<LatestInvoiceRaw>`
-      SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const data =
+      await sql<LatestInvoiceRaw> /* This SQL query is selecting specific columns (`invoices.amount`, `customers.name`,
+`customers.image_url`, `customers.email`, `invoices.id`) from two tables (`invoices` and
+`customers`) and joining them based on a common column (`invoices.customer_id = customers.id`). The
+query is retrieving data related to the latest invoices by ordering the results based on the
+`invoices.date` column in descending order (`DESC`) and limiting the output to only the top 5
+results (`LIMIT 5`). */`SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
       ORDER BY invoices.date DESC
       LIMIT 5`;
 
+    console.log('Data fetch completed after 3 seconds.');
     const latestInvoices = data.rows.map((invoice) => ({
       ...invoice,
       amount: formatCurrency(invoice.amount),
     }));
     return latestInvoices;
   } catch (error) {
+    /* The line `console.error('Database Error:', error);` is logging an error message to the console
+    with the prefix 'Database Error:'. This is a common practice in JavaScript to log errors along
+    with additional context information to help with debugging and troubleshooting. In this case, it
+    specifically indicates that an error related to the database has occurred, and the error object
+    itself is being logged as well. This can be helpful for developers to identify the source and
+    nature of the error when working with database operations in the code. */
     console.error('Database Error:', error);
+    /* The line `throw new Error('Failed to fetch the latest invoices.');` is throwing an error with a
+    specific message indicating that the fetching of the latest invoices has failed. This error will
+    be caught by the error handling mechanism in the calling code or by any higher-level error
+    handling functions to handle the failure appropriately, such as logging the error or displaying
+    an error message to the user interface. */
     throw new Error('Failed to fetch the latest invoices.');
   }
 }
 
 export async function fetchCardData() {
+  noStore();
   try {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
@@ -92,6 +118,7 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number,
 ) {
+  noStore();
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
@@ -124,6 +151,7 @@ export async function fetchFilteredInvoices(
 }
 
 export async function fetchInvoicesPages(query: string) {
+  noStore();
   try {
     const count = await sql`SELECT COUNT(*)
     FROM invoices
@@ -145,6 +173,7 @@ export async function fetchInvoicesPages(query: string) {
 }
 
 export async function fetchInvoiceById(id: string) {
+  noStore();
   try {
     const data = await sql<InvoiceForm>`
       SELECT
